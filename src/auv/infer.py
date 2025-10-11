@@ -47,7 +47,6 @@ def main():
         data = {
             "sample": wav,
             "sample_rate": sr,
-            # "tokens": vq_code,  # will skip tokenization, directly use the given indices to decode
         }
 
         with torch.autocast(

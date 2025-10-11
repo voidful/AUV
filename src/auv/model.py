@@ -52,21 +52,14 @@ class AUV(nn.Module):
 
     @torch.no_grad()
     def encode(self, data):
-        wav_input = data.get("sample", None)
-        sample_rate = data.get("sample_rate", None)
-        if "tokens" not in data:
-            assert wav_input is not None, "Neither tokens (vq_codes) nor raw wavfiles were provided"
-            assert wav_input.size(0) == 1, "Only support batch_size == 1 when inference"
-            if wav_input.dim() == 2:
-                wav_input = wav_input.unsqueeze(1)
-            tokenizer_out = self.tokenizer(wav_input.squeeze(1), input_sample_rate=sample_rate)
-            quantized = tokenizer_out["quantized"]
-            tokens = tokenizer_out["tokens"]
-            before_quantize = tokenizer_out["before_quantize"]
-        else:
-            tokens = data["tokens"]
-            quantized = self.tokenizer.vq2emb(tokens)
-            before_quantize = None
+        wav_input = data["sample"]
+        sample_rate = data["sample_rate"]
+        assert wav_input.size(0) == 1, "Only support batch_size == 1 when inference"
+
+        tokenizer_out = self.tokenizer(wav_input, input_sample_rate=sample_rate)
+        quantized = tokenizer_out["quantized"]
+        tokens = tokenizer_out["tokens"]
+        before_quantize = tokenizer_out["before_quantize"]
 
         res = {
             "quantized": quantized,
