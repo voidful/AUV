@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools >= 61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "auv"
+version = "0.1.0"
+description = "AUV: Teaching Audio Universal Vector Quantization with Single Nested Codebook"
+readme = "README.md"
+license = {text = "MIT License"}
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "einops",
+    "torch>=2.0.0",
+    "torchaudio>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/SWivid/AUV"
+
+[project.scripts]
+"auv-infer" = "auv.infer:main"
