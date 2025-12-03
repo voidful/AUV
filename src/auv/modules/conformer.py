@@ -6,6 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 
+from auv.modules.activations import Snake
+
 
 class RotaryEmbedding(nn.Module):
     def __init__(self, dim: int, max_position_embeddings: int = 2048, base: int = 10000, device=None):
@@ -153,7 +155,7 @@ class FeedForward(nn.Module):
         self.ffn_hidden_size = ffn_hidden_size
         self.up_proj = nn.Linear(hidden_size, ffn_hidden_size)
         self.down_proj = nn.Linear(ffn_hidden_size, hidden_size)
-        self.act_fn = nn.GELU(approximate="tanh")
+        self.act_fn = Snake(ffn_hidden_size)
 
     def forward(self, x):
         x = self.act_fn(self.up_proj(x))
@@ -188,7 +190,7 @@ class ConformerConvolutionModule(nn.Module):
             bias=False,
         )
         self.conv_norm = nn.BatchNorm1d(hidden_size)
-        self.activation = nn.GELU(approximate="tanh")
+        self.activation = Snake(hidden_size)
         # pointwise conv 2
         self.pointwise_conv2 = nn.Conv1d(hidden_size, hidden_size, kernel_size=1, stride=1, padding=0, bias=False)
 
