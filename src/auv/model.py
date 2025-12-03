@@ -44,7 +44,11 @@ class AUV(nn.Module):
                 "max_position_embeddings": 4096,
             },
         )
-        self.load_state_dict(ckpt)
+        incompatible_keys = self.load_state_dict(ckpt, strict=False)
+        if incompatible_keys.missing_keys:
+            print(f"[AUV] Missing keys in checkpoint (using default values): {len(incompatible_keys.missing_keys)} keys")
+        if incompatible_keys.unexpected_keys:
+            print(f"[AUV] Unexpected keys in checkpoint (ignored): {len(incompatible_keys.unexpected_keys)} keys")
         del ckpt
 
     def forward(self, feature):
