@@ -66,6 +66,19 @@ class AUV(nn.Module):
         tokens = tokenizer_out["tokens"]
         before_quantize = tokenizer_out["before_quantize"]
 
+        codebook_size = self.tokenizer.vq.num_quantizers
+
+        if tokens.dim() == 3:
+            # tokens usually comes out as [num_quantizers, Batch, Time] from ResidualVQ stack
+            # or could be [Batch, num_quantizers, Time]
+            # Since AUV has num_quantizers = 1 usually, we squeeze that dimension out
+            if tokens.size(0) == 1:
+                tokens = tokens.squeeze(0)
+            elif tokens.size(1) == 1:
+                tokens = tokens.squeeze(1)
+
+        assert tokens.dim() == 2, f"Expected 2D [Batch, Time] for tokens, got {tokens.dim()}D: {tokens.shape}"
+
         res = {
             "quantized": quantized,
             "tokens": tokens,
