@@ -52,20 +52,35 @@ class AUVCodecEncWithVQ(nn.Module):
     def train(self, mode=True):
         super().train(mode)
 
-    def get_hidden_feat(self, x, input_sample_rate=None):
+    def get_hidden_feat(self, x, lengths=None, input_sample_rate=None):
         assert x.dim() == 2, "wav input for auv encoder should with dim==2"
         # resample
         if input_sample_rate is not None and input_sample_rate != self.sample_rate:
             x = resample(x, orig_freq=input_sample_rate, new_freq=self.sample_rate)
+            if lengths is not None:
+                lengths = torch.round(lengths * (self.sample_rate / input_sample_rate)).long()
 
         feat = self.stft_head(x)
-        (feat,) = self.conformer(feat)
+        
+        # calculate masks
+        B, T, _ = feat.shape
+        attention_mask = None
+        mask_pad = None
+        if lengths is not None:
+            # stft hop length calculation
+            feat_lengths = torch.ceil(lengths / self.hop_length).long()
+            
+            # create masks
+            mask_pad = torch.arange(T, device=x.device)[None, :] < feat_lengths[:, None]  # [B, T]
+            attention_mask = mask_pad.unsqueeze(1) & mask_pad.unsqueeze(2)  # [B, T, T]
+            
+        (feat,) = self.conformer(feat, attention_mask=attention_mask, mask_pad=mask_pad)
         feat = feat.transpose(1, 2)
 
         return feat
 
-    def forward(self, wav_input, wav_types=None, input_sample_rate=None, **kwargs):
-        hidden_feats = self.get_hidden_feat(wav_input, input_sample_rate=input_sample_rate)
+    def forward(self, wav_input, wav_types=None, lengths=None, input_sample_rate=None, **kwargs):
+        hidden_feats = self.get_hidden_feat(wav_input, lengths=lengths, input_sample_rate=input_sample_rate)
 
         codebook_partitions = (
             [self.codebook_partition_maps[wav_t] for wav_t in wav_types]

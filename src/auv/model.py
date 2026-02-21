@@ -54,9 +54,9 @@ class AUV(nn.Module):
     def encode(self, data):
         wav_input = data["sample"]
         sample_rate = data["sample_rate"]
-        assert wav_input.size(0) == 1, "Only support batch_size == 1 when inference"
+        lengths = data.get("lengths", None)
 
-        tokenizer_out = self.tokenizer(wav_input, input_sample_rate=sample_rate)
+        tokenizer_out = self.tokenizer(wav_input, lengths=lengths, input_sample_rate=sample_rate)
         quantized = tokenizer_out["quantized"]
         tokens = tokenizer_out["tokens"]
         before_quantize = tokenizer_out["before_quantize"]
