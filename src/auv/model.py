@@ -53,6 +53,11 @@ class AUV(nn.Module):
     @torch.no_grad()
     def encode(self, data):
         wav_input = data["sample"]
+        
+        # Squeeze channel dimension if someone accidentally passes [B, 1, T]
+        if wav_input.dim() == 3 and wav_input.size(1) == 1:
+            wav_input = wav_input.squeeze(1)
+            
         sample_rate = data["sample_rate"]
         lengths = data.get("lengths", None)
 
@@ -66,6 +71,12 @@ class AUV(nn.Module):
             "tokens": tokens,
             "before_quantize": before_quantize,
         }
+
+        if lengths is not None:
+            # calculate lengths after STFT and Conformer downsampling
+            # STFT uses hop_length
+            feat_lengths = torch.ceil(lengths / self.tokenizer.hop_length).long()
+            res["lengths"] = feat_lengths
 
         return res
 
