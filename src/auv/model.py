@@ -97,11 +97,24 @@ class AUV(nn.Module):
 
     @torch.no_grad()
     def decode(self, emb, **kwargs):
+        assert emb.dim() == 3, f"Expected 3D [Batch, Time, Dim] for decode input, got {emb.dim()}D: {emb.shape}"
         audio = self.token2wav(emb)
         return audio
 
     @torch.no_grad()
     def decode_tokens(self, tokens, **kwargs):
-        quantized = self.tokenizer.vq2emb(tokens)
+        if tokens.dim() == 3:
+            # If the user passes raw output from a codebook stack [num_quantizers, Batch, Time] 
+            # we should dynamically squeeze it if it's singular.
+            if tokens.size(0) == 1:
+                tokens = tokens.squeeze(0)
+            elif tokens.size(1) == 1:
+                tokens = tokens.squeeze(1)
+                
+        assert tokens.dim() == 2, f"Expected 2D [Batch, Time] for decode_tokens input, got {tokens.dim()}D: {tokens.shape}"
+        
+        # vq2emb expects [Batch, Time, num_quantizers]
+        tokens_for_vq = tokens.unsqueeze(-1)
+        quantized = self.tokenizer.vq2emb(tokens_for_vq)
         audio = self.token2wav(quantized)
         return audio
