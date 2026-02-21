@@ -77,8 +77,10 @@ class AUV(nn.Module):
             elif tokens.size(1) == 1:
                 tokens = tokens.squeeze(1)
 
-        assert tokens.dim() == 2, f"Expected 2D [Batch, Time] for tokens, got {tokens.dim()}D: {tokens.shape}"
-
+        assert tokens.dim() == 2, f"Expected 2D [Batch, Time] for tokens_2d, got {tokens.dim()}D: {tokens.shape}"
+        assert quantized.dim() == 3, f"Expected 3D [Batch, Time, Dim] for quantized, got {quantized.dim()}D: {quantized.shape}"
+        assert before_quantize.dim() == 3, f"Expected 3D [Batch, Time, Dim] for before_quantize, got {before_quantize.dim()}D: {before_quantize.shape}"
+        
         res = {
             "quantized": quantized,
             "tokens": tokens,
